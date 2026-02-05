@@ -1,6 +1,3 @@
-
-                                                                                                                    SimpleBank.sol
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -56,6 +53,7 @@ contract SimpleBank {
 
 
 专业术语：你正在利用 Hardhat Ignition 框架执行合约部署（Deployment）。你将编译生成的 Bytecode 封装在一个 Transaction（交易）中，发送到了你本地运行的 EVM（以太坊虚拟机） 节点。当这个节点确认了这笔交易，你的合约就有了唯一的 Contract Address（合约地址），正式进入了运行态（Runtime）。
+
 
 
 
