@@ -1,34 +1,44 @@
 
-                                                                                                                    SimpleBank.js
+                                                                                                                    SimpleBank.sol
 
-import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
 
-const SimpleBankModule = buildModule("SimpleBankModule", (m) => {
-  // 这里的 "SimpleBank" 必须和你 contracts/SimpleBank.sol 里的合约名字一模一样
-  const bank = m.contract("SimpleBank");
+/**
+ * @title SimpleBank
+ * @dev 这是一个基础的银行合约，实现了你之前跑通的存取款逻辑。
+ */
+contract SimpleBank {
+    // 1. 理解 mapping: 多人储物柜账本
+    mapping(address => uint256) private balances;
 
-  return { bank };
-});
+    // 2. 理解 address: 储户的地址（账号）
+    address public owner;
 
-export default SimpleBankModule;
+    // 3. 理解 constructor: 开业剪彩（认主）
+    constructor() {
+        owner = msg.sender;
+    }
 
+    // 存款功能
+    function deposit() public payable {
+        // 4. 理解 require: 安保拦截（必须存入大于 0 的钱）
+        require(msg.value > 0, "Deposit amount must be greater than 0");
+        balances[msg.sender] += msg.value;
+    }
 
+    // 取款功能
+    function withdraw(uint256 amount) public {
+        require(balances[msg.sender] >= amount, "Insufficient balance");
+        balances[msg.sender] -= amount;
+        payable(msg.sender).transfer(amount);
+    }
 
-
-
-import { buildModule } ...： 这是从工具箱里拿出一把“扳手”。buildModule 是 Hardhat 官方提供的一个标准函数，用来封装部署逻辑。
-
-const SimpleBankModule = ...： 这是给这次施工任务起个名字，叫“SimpleBank 部署任务”。
-
-const bank = m.contract("SimpleBank");（核心行）： 这是最关键的指令。它告诉 Hardhat：“去 artifacts 文件夹里找那个叫 SimpleBank 的编译产物（也就是你昨晚生成的那个 JSON），并把它部署到链上。”
-
-return { bank };： 这是“完工交接”。部署成功后，把这个合约实例返回出来，方便你后续在脚本里继续操作它（比如给它转账）。
-
-
-
-
-
-
+    // 查看余额
+    function getBalance() public view returns (uint256) {
+        return balances[msg.sender];
+    }
+}
 
 
 
@@ -46,5 +56,6 @@ return { bank };： 这是“完工交接”。部署成功后，把这个合约
 
 
 专业术语：你正在利用 Hardhat Ignition 框架执行合约部署（Deployment）。你将编译生成的 Bytecode 封装在一个 Transaction（交易）中，发送到了你本地运行的 EVM（以太坊虚拟机） 节点。当这个节点确认了这笔交易，你的合约就有了唯一的 Contract Address（合约地址），正式进入了运行态（Runtime）。
+
 
 
