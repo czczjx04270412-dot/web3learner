@@ -1,0 +1,47 @@
+
+                                                                                                                    SimpleBank.ts
+
+import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
+
+const SimpleBankModule = buildModule("SimpleBankModule", (m) => {
+  // 这里的 "SimpleBank" 必须和你 contracts/SimpleBank.sol 里的合约名字一模一样
+  const bank = m.contract("SimpleBank");
+
+  return { bank };
+});
+
+export default SimpleBankModule;
+
+
+
+
+
+import { buildModule } ...： 这是从工具箱里拿出一把“扳手”。buildModule 是 Hardhat 官方提供的一个标准函数，用来封装部署逻辑。
+
+const SimpleBankModule = ...： 这是给这次施工任务起个名字，叫“SimpleBank 部署任务”。
+
+const bank = m.contract("SimpleBank");（核心行）： 这是最关键的指令。它告诉 Hardhat：“去 artifacts 文件夹里找那个叫 SimpleBank 的编译产物（也就是你昨晚生成的那个 JSON），并把它部署到链上。”
+
+return { bank };： 这是“完工交接”。部署成功后，把这个合约实例返回出来，方便你后续在脚本里继续操作它（比如给它转账）。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+大白话：你昨晚在“写作文”（写代码），刚才在“校对并装订”（编译成 ABI/Bytecode），而现在，你正在**“把这款新软件安装到服务器上并点击启动”**。
+
+专业术语：你正在利用 Hardhat Ignition 框架执行合约部署（Deployment）。你将编译生成的 Bytecode 封装在一个 Transaction（交易）中，发送到了你本地运行的 EVM（以太坊虚拟机） 节点。当这个节点确认了这笔交易，你的合约就有了唯一的 Contract Address（合约地址），正式进入了运行态（Runtime）。
