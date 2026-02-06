@@ -1,0 +1,27 @@
+//SPDX-License-Identifier:MIT
+pragma solidity ^0.8.0;
+
+contract SimpleBankV2{
+    address public owner;
+    mapping (address => uint256) public balances;
+
+    constructor(){
+        owner = msg.sender;
+    }
+    
+    //存钱操作deposit=存钱按钮 payable=入钞口不加payable钱会原路退还（消耗gas）
+    function deposit() public payable{
+        balances[msg.sender] += msg.value;//存钱操作，msg.sender=存钱的人  msg.value=存的金额
+    }
+    function withdraw(uint256 amount) public {//withdraw=取款
+//修改取钱单位(uint256 actualAmount = amount * 1 ether;)加入上面函数下面
+
+        require(balances[msg.sender] >= amount,"Insufficient balance!");//“账本余额”必须大于等于“想取的钱”否则余额不足
+
+        balances[msg.sender] -= amount;
+        payable(msg.sender).transfer( amount);//payable可支付类型，transfer=汇款指令
+    }
+    function getMyBanlance() public view returns (uint256){
+
+    }
+}
