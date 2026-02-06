@@ -24,4 +24,5 @@ contract SimpleBankV2{
     function getMyBanlance() public view returns (uint256){
 
     }
+
 }
