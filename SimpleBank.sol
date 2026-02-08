@@ -48,12 +48,3 @@ contract SimpleBank {
 
 
 
-
-大白话：你昨晚在“写作文”（写代码），刚才在“校对并装订”（编译成 ABI/Bytecode），而现在，你正在**“把这款新软件安装到服务器上并点击启动”**。
-
-
-专业术语：你正在利用 Hardhat Ignition 框架执行合约部署（Deployment）。你将编译生成的 Bytecode 封装在一个 Transaction（交易）中，发送到了你本地运行的 EVM（以太坊虚拟机） 节点。当这个节点确认了这笔交易，你的合约就有了唯一的 Contract Address（合约地址），正式进入了运行态（Runtime）。
-
-
-
-
