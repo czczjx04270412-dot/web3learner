@@ -2,41 +2,44 @@
 pragma solidity ^0.8.20;
 
 /**
- * @title SimpleBank
- * @dev 最终版：包含存取款、白名单、分红以及行长紧急提取功能。
- * 已根据最新标准将 .transfer 升级为 .call 方式。
+ * @title SimpleBank (Final Version)
+ * @dev 功能：存取款 + 白名单 + 分红 + 紧急提取 + 熔断开关
  */
 contract SimpleBank {
-    // 账本：记录每个地址的余额
     mapping(address => uint256) private balances;
-
-    // 银行行长：部署合约的人
     address public owner;
+    address[] public customerList; 
+    mapping(address => bool) public isWhiteListed; 
 
-    // 白名单相关变量
-    address[] public customerList; // 储户名单（用于遍历发钱）
-    mapping(address => bool) public isWhiteListed; // 快速检查某人是否在名单内
+    // --- 【核心新增】熔断机制开关 ---
+    bool public isPaused; // 默认 false，表示银行正常营业
 
     constructor() {
         owner = msg.sender;
     }
 
-    // 存款功能：存钱的同时自动加入白名单
+    // 老板专属：一键开关（熔断）
+    function togglePause() public {
+        require(msg.sender == owner, "Only owner can toggle pause");
+        isPaused = !isPaused; // 状态取反：开变关，关变开
+    }
+
+    // 存款：如果熔断开启，禁止存款
     function deposit() public payable {
+        require(!isPaused, "Bank is paused for maintenance");
         require(msg.value > 0, "Deposit amount must be greater than 0");
         
-        // 如果这个地址是第一次存钱，就把他加进去
         if (!isWhiteListed[msg.sender]) {
             isWhiteListed[msg.sender] = true;
             customerList.push(msg.sender);
         }
-        
         balances[msg.sender] += msg.value;
     }
 
-    // 分红功能：只有行长可以执行，给名单里的每人发 0.01 ETH（账面数字）
+    // 分红：如果熔断开启，禁止发钱
     function airdropBonus() public {
         require(msg.sender == owner, "Only owner can airdrop");
+        require(!isPaused, "Bank is paused");
         
         for (uint256 i = 0; i < customerList.length; i++) {
             address user = customerList[i];
@@ -44,35 +47,28 @@ contract SimpleBank {
         }
     }
 
-    // 行长紧急提取功能：将合约内所有余额转给行长
-    function emergencyWithdraw() public {
-        require(msg.sender == owner, "Only Boss can rescue funds!");
-        uint256 entireBalance = address(this).balance;
-        require(entireBalance > 0, "Bank is already empty");
-        
-        // 现代安全转账方式：使用 .call
-        (bool success, ) = payable(owner).call{value: entireBalance}("");
-        require(success, "Emergency transfer failed");
-    }
-
-    // 用户取款功能
+    // 取款：【最关键】熔断开启时，锁定资金，防止黑客继续提现
     function withdraw(uint256 amount) public {
+        require(!isPaused, "Emergency: Bank is paused, withdrawals are locked!");
         require(balances[msg.sender] >= amount, "Insufficient balance");
         
-        // 先扣钱，后转账（防重入攻击的好习惯）
         balances[msg.sender] -= amount;
-
-        // 现代安全转账方式：使用 .call
         (bool success, ) = payable(msg.sender).call{value: amount}("");
         require(success, "Withdrawal failed");
     }
 
-    // 查看余额
+    // 紧急提取（即使熔断了，老板也能救出剩下的钱）
+    function emergencyWithdraw() public {
+        require(msg.sender == owner, "Only Boss can rescue funds!");
+        uint256 entireBalance = address(this).balance;
+        (bool success, ) = payable(owner).call{value: entireBalance}("");
+        require(success, "Emergency transfer failed");
+    }
+
     function getBalance() public view returns (uint256) {
         return balances[msg.sender];
     }
 }
-
 
 
 
