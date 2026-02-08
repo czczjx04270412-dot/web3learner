@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
-//总言（不改）：这串代码具备存款，取款，紧急取款，行长，安保，白名单
+//总言（不改）：这串代码具备存款，取款，紧急取款，行长，安保，白名单，行长发红包，熔断机制
 contract SimpleBankWithEvent {
     address public owner; 
     mapping(address => uint256) public balances;
@@ -9,6 +9,8 @@ contract SimpleBankWithEvent {
 
     // 这里的 mapping 像是一个开关，记录某人是否已经进过名单了
     mapping(address => bool) public hasRegistered;
+
+    bool public isPaused = false;
 
     event Deposited(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
@@ -52,4 +54,30 @@ contract SimpleBankWithEvent {
     function getCustomerCount() public view returns (uint256) {
         return customerList.length;
     }
+    // 1. 总闸开关（防患于未然）
+    function togglePause() public onlyOwner {
+    isPaused = !isPaused;
+    }
+        // 给所有在名单里的人发红包
+function airdropBonus() public onlyOwner {
+    uint256 reward = 0.001 ether; // 设定红包金额
+    
+    // 检查金库里的钱够不够发给所有人
+    require(address(this).balance >= customerList.length * reward, "Bank broke!");
+
+    // 开始循环：i 从 0 增加到名单总人数
+    for (uint256 i = 0; i < customerList.length; i++) {
+        if (isPaused) {
+                break; // 如果总闸关了，立刻停止后续所有人的发放
+        }       
+        address user = customerList[i]; // 获取当前排队的人的地址
+        
+        // 执行转账逻辑
+        (bool success, ) = user.call{value: reward}("");
+        // 注意：在大规模循环中，我们通常不建议在循环内用 require(success)
+        // 因为如果其中一个人地址有问题导致转账失败，整个循环都会回滚！
+        // 这里的处理体现了 Web3 全栈的安全思维。
+    }
 }
+     }
+
