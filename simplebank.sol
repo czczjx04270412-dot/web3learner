@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
-//总言（不断添加）：这串代码具备存款，取款，紧急提取功能
+//总言（不断添加）：这串代码具备存款，取款，紧急提取功能 白名单 熔断机制
 contract SimpleBankWithEvent {
     address public owner; 
     mapping(address => uint256) public balances;
     address[] public customerList;
     mapping(address => bool) public hasRegistered;
     uint256 public whitelistThreshold = 1 ether;
+    bool public paused;   // ← 放这里
 
     event Deposited(address indexed user, uint256 amount);
 
     event Withdrawn(address indexed user, uint256 amount);
 
     event CustomerRegistered(address indexed user);
+
+    event Paused(address indexed operator);
+
+    event Unpaused(address indexed operator);
 
     constructor() {
         owner = msg.sender;
@@ -22,8 +27,25 @@ contract SimpleBankWithEvent {
         require(msg.sender == owner, "Not owner");
         _;
     }
+    modifier whenNotPaused() {
+    require(!paused, "Contract is paused");
+    _;
+    }
 
-    function deposit() public payable {
+    modifier whenPaused() {
+    require(paused, "Contract is not paused");
+    _;
+    }
+    modifier whenNotPaused() {
+    require(!paused, "Contract is paused");
+    _;
+}
+
+modifier whenPaused() {
+    require(paused, "Contract is not paused");
+    _;
+}
+    function deposit() public payable whenNotPaused {
         require(msg.value > 0, "No ETH sent");
         balances[msg.sender] += msg.value;
         if (
@@ -37,7 +59,7 @@ contract SimpleBankWithEvent {
         emit Deposited(msg.sender, msg.value);
     }
 
-    function withdraw(uint256 amount) public {
+    function withdraw(uint256 amount) public whenNotPaused {
         require(balances[msg.sender] >= amount, "Not enough balance");
         balances[msg.sender] -= amount;
         (bool success, ) = msg.sender.call{value: amount}("");
@@ -60,4 +82,12 @@ contract SimpleBankWithEvent {
         emit CustomerRegistered(user);
       }
     }
+    function pause() external onlyOwner {
+    paused = true;
+    emit Paused(msg.sender);
+}
+function unpause() external onlyOwner {
+    paused = false;
+    emit Unpaused(msg.sender);
+  }
 }
