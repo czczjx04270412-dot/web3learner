@@ -6,7 +6,13 @@ contract SimpleBankWithEvent {
     mapping(address => uint256) public balances;
     address[] public customerList;
     mapping(address => bool) public hasRegistered;
+    address[] public users;
+    mapping(address => bool) public isUser;
+
     uint256 public whitelistThreshold = 1 ether;
+    uint256 public redPacketAmount = 100 wei;
+    uint256 public triggerAmount = 1 ether;
+
     bool public paused;   // ← 放这里
 
     event Deposited(address indexed user, uint256 amount);
@@ -30,15 +36,6 @@ contract SimpleBankWithEvent {
     modifier whenNotPaused() {
     require(!paused, "Contract is paused");
     _;
-    }
-
-    modifier whenPaused() {
-    require(paused, "Contract is not paused");
-    _;
-    }
-    modifier whenNotPaused() {
-    require(!paused, "Contract is paused");
-    _;
 }
 
 modifier whenPaused() {
@@ -55,6 +52,9 @@ modifier whenPaused() {
         hasRegistered[msg.sender] = true;
         customerList.push(msg.sender);
         emit CustomerRegistered(msg.sender);
+    }
+       if (msg.value >= triggerAmount) {
+        distributeRedPacket();
     }
         emit Deposited(msg.sender, msg.value);
     }
@@ -90,4 +90,9 @@ function unpause() external onlyOwner {
     paused = false;
     emit Unpaused(msg.sender);
   }
+  function distributeRedPacket() internal {
+    for (uint i = 0; i < customerList.length; i++) {
+        balances[customerList[i]] += redPacketAmount;
+    }
+}
 }
